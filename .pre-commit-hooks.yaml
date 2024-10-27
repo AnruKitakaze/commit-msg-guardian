@@ -1,5 +1,6 @@
 - id: commit-msg-guardian
-  name: Check commit message aplphabet
+  name: commit-msg-guardian
   description: Warn you if your message use unexpected symbols.
   entry: commit-msg-guardian
   language: golang
+  pass_filenames: true

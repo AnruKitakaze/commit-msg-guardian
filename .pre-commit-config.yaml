@@ -1,9 +1,0 @@
-repos:
-  - repo: local
-    hooks:
-      - id: commit-msg-guardian
-        name: Check commit message aplphabet
-        entry: go run .
-        language: golang
-        pass_filenames: false
-        always_run: true
