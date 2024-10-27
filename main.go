@@ -8,7 +8,8 @@ import (
 
 func main() {
 	fmt.Println("TEST HOOK")
-	d, err := os.ReadFile("..git/COMMIT_EDITMSG")
+	fmt.Println("Args: ", os.Args)
+	d, err := os.ReadFile("../COMMIT_EDITMSG")
 	if err != nil {
 		panic(err)
 	}
