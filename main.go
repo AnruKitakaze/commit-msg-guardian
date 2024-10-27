@@ -11,7 +11,8 @@ func main() {
 	fmt.Println("Args: ", os.Args)
 	d, err := os.ReadFile("../COMMIT_EDITMSG")
 	if err != nil {
-		panic(err)
+		fmt.Println("NO COMMIT MSG FILE FOUND, ", err)
+		os.Exit(1)
 	}
 	fmt.Println(string(d))
 
@@ -30,4 +31,5 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Println("NO ERRORS")
+	os.Exit(1)
 }
