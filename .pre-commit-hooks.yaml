@@ -1,8 +1,12 @@
 - id: commit-msg-guardian
   name: commit-msg-guardian
-  description: Warn you if your message use unexpected symbols.
+  description: Validates commit messages against specified rules (language, format, etc.)
   entry: commit-msg-guardian
   language: golang
   pass_filenames: true
   stages:
     - commit-msg
+  args:
+    - --type-rules=latinOnly
+    - --scope-rules=latinOnly,digitsOnly
+    - --description-rules=noCyrillic
