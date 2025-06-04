@@ -7,6 +7,6 @@
   stages:
     - commit-msg
   args:
-    - --type-rules=latinOnly
-    - --scope-rules=latinOnly,digitsOnly
+    - --type-rules=allowLatin
+    - --scope-rules=allowScope
     - --description-rules=noCyrillic
