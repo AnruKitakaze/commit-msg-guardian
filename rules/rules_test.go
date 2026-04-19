@@ -20,6 +20,7 @@ func TestRuleFactory(t *testing.T) {
 		{"valid allowcyrillic", "allowcyrillic", false},
 		{"valid allowdigits", "allowdigits", false},
 		{"valid allowscope", "allowscope", false},
+		{"valid allowpathscope", "allowpathscope", false},
 		{"invalid rule", "nonexistent", true},
 		// Case insensitivity tests
 		{"uppercase rule", "NOCYRILLIC", false},
@@ -221,6 +222,13 @@ func TestAllowScopeRule(t *testing.T) {
 		{"single char", "T", false},
 		{"starts with hyphen", "-T1", true},
 		{"ends with hyphen", "T1-", true},
+		{"with slash delimiter", "app/api", true},
+		{"with multiple slash delimiters", "apps/web/auth", true},
+		{"starts with slash", "/T1", true},
+		{"ends with slash", "T1/", true},
+		{"empty slash segment", "app//api", true},
+		{"slash segment starts with hyphen", "app/-api", true},
+		{"slash segment ends with hyphen", "app/api-", true},
 		{"only hyphens", "-", true},
 		{"with cyrillic", "task-привет", true},
 		{"with spaces", "task 123", true},
@@ -228,6 +236,41 @@ func TestAllowScopeRule(t *testing.T) {
 	}
 
 	runRuleTests(t, "AllowScopeRule", rule, tests)
+}
+
+func TestAllowPathScopeRule(t *testing.T) {
+	rule := &AllowPathScopeRule{}
+	tests := []struct {
+		name    string
+		text    string
+		wantErr bool
+	}{
+		{"simple scope", "T1", false},
+		{"scope with hyphen", "T-1", false},
+		{"scope with slash delimiter", "app/api", false},
+		{"scope with slash and hyphen", "app/my-feature", false},
+		{"scope with multiple slash delimiters", "apps/web/auth", false},
+		{"scope with many slash delimiters", "this/is/some/path", false},
+		{"complex scope", "task-123", false},
+		{"multiple hyphens", "my-task-123", false},
+		{"starts with letter", "a-1", false},
+		{"starts with digit", "1-a", false},
+		{"empty string", "", true},
+		{"single char", "T", false},
+		{"starts with hyphen", "-T1", true},
+		{"ends with hyphen", "T1-", true},
+		{"starts with slash", "/T1", true},
+		{"ends with slash", "T1/", true},
+		{"empty slash segment", "app//api", true},
+		{"slash segment starts with hyphen", "app/-api", true},
+		{"slash segment ends with hyphen", "app/api-", true},
+		{"only hyphens", "-", true},
+		{"with cyrillic", "task-привет", true},
+		{"with spaces", "task 123", true},
+		{"with other punctuation", "task.123", true},
+	}
+
+	runRuleTests(t, "AllowPathScopeRule", rule, tests)
 }
 
 // Helper function to run rule tests

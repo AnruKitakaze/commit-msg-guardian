@@ -22,7 +22,7 @@ func ParseCommitMessage(message string) (*CommitMessage, error) {
 	header := lines[0]
 
 	// Parse header
-	headerPattern := regexp.MustCompile(`^(\w+)(?:\(([\w-]+)\))?: (.+)$`)
+	headerPattern := regexp.MustCompile(`^(\w+)(?:\(([\w-]+(?:/[\w-]+)*)\))?: (.+)$`)
 	matches := headerPattern.FindStringSubmatch(header)
 	if matches == nil {
 		return nil, fmt.Errorf("invalid commit message format")
