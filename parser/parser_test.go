@@ -32,6 +32,16 @@ func TestParseCommitMessage(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "valid commit with slash-delimited scope",
+			message: "feat(app/api): add endpoint",
+			want: &CommitMessage{
+				Type:        "feat",
+				Scope:       "app/api",
+				Description: "add endpoint",
+			},
+			wantErr: false,
+		},
+		{
 			name: "valid commit with body",
 			message: `feat(scope): add new feature
 
@@ -68,6 +78,11 @@ It can span multiple lines`,
 		{
 			name:    "invalid scope format",
 			message: "feat[scope]: description",
+			wantErr: true,
+		},
+		{
+			name:    "invalid scope with empty slash segment",
+			message: "feat(app//api): description",
 			wantErr: true,
 		},
 	}
@@ -115,6 +130,18 @@ func TestValidateWithRules(t *testing.T) {
 			},
 			typeRules:  []string{"allowLatin"},
 			scopeRules: []string{"allowScope"},
+			descRules:  []string{"noCyrillic"},
+			wantErr:    false,
+		},
+		{
+			name: "slash-delimited scope",
+			message: &CommitMessage{
+				Type:        "feat",
+				Scope:       "app/api",
+				Description: "add new feature",
+			},
+			typeRules:  []string{"allowLatin"},
+			scopeRules: []string{"allowPathScope"},
 			descRules:  []string{"noCyrillic"},
 			wantErr:    false,
 		},

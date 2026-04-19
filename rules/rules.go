@@ -40,6 +40,8 @@ func RuleFactory(ruleName string) (Rule, error) {
 		return &AllowDigitsRule{}, nil
 	case "allowscope":
 		return &AllowScopeRule{}, nil
+	case "allowpathscope":
+		return &AllowPathScopeRule{}, nil
 	default:
 		return nil, fmt.Errorf("unknown rule: %s", ruleName)
 	}
@@ -139,8 +141,18 @@ func (r *AllowDigitsRule) Validate(text string) error {
 type AllowScopeRule struct{}
 
 func (r *AllowScopeRule) Validate(text string) error {
-	if !regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9]$`).MatchString(text) {
+	if !regexp.MustCompile(`^[a-zA-Z0-9]+(?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`).MatchString(text) {
 		return fmt.Errorf("scope must start and end with alphanumeric character and contain only Latin letters, digits, and hyphens")
+	}
+	return nil
+}
+
+// AllowPathScopeRule allows slash-delimited scope segments (Latin, digits, and hyphens)
+type AllowPathScopeRule struct{}
+
+func (r *AllowPathScopeRule) Validate(text string) error {
+	if !regexp.MustCompile(`^[a-zA-Z0-9]+(?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:/[a-zA-Z0-9]+(?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$`).MatchString(text) {
+		return fmt.Errorf("scope must contain slash-delimited segments that start and end with alphanumeric characters and contain only Latin letters, digits, and hyphens")
 	}
 	return nil
 }

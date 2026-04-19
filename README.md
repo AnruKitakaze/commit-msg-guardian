@@ -18,6 +18,7 @@ A Git pre-commit hook that validates commit messages against specified rules, en
     - `allowCyrillic`: Allows Cyrillic characters, digits, and basic punctuation
     - `allowDigits`: Allows Latin characters, digits, and basic punctuation
     - `allowScope`: Special rule for scopes that allows Latin, digits, and hyphens (must start and end with alphanumeric)
+    - `allowPathScope`: Special rule for scopes that allows slash-delimited `allowScope` path segments
 - Configurable validation rules for different parts of the commit message (type, scope, description)
 - Body text is not validated by default
 
@@ -83,6 +84,8 @@ You can customize the validation rules using command line arguments:
 - `--scope-rules`: Comma-separated rules for commit scope (default: "allowScope")
 - `--description-rules`: Comma-separated rules for commit description (default: "noCyrillic")
 
+Use `--scope-rules=allowPathScope` to allow slash-delimited scopes such as `app/api` or `this/is/some/path`.
+
 ### Examples
 
 Valid commit messages:
@@ -91,6 +94,7 @@ feat(TGK-1827): This is an example
 docs(T-1): This is valid too
 feat(T1): Another valid example
 feat(task-123): Valid with hyphen
+feat(app/api): Valid with slash-delimited folders when using --scope-rules=allowPathScope
 
 With кириллица in description (body is not validated by default)
 ```
@@ -102,6 +106,7 @@ random: Not a valid type                 # Invalid commit type
 feat[scope]: Wrong scope format          # Invalid scope format
 feat(-T1): Invalid scope format          # Scope can't start with hyphen
 feat(T1-): Invalid scope format          # Scope can't end with hyphen
+feat(app//api): Invalid scope format     # Scope can't contain empty slash segments
 ```
 
 ## Contributing
