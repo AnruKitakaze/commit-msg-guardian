@@ -19,8 +19,13 @@ A Git pre-commit hook that validates commit messages against specified rules, en
     - `allowDigits`: Allows Latin characters, digits, and basic punctuation
     - `allowScope`: Special rule for scopes that allows Latin, digits, and hyphens (must start and end with alphanumeric)
     - `allowPathScope`: Special rule for scopes that allows slash-delimited `allowScope` path segments
-- Configurable validation rules for different parts of the commit message (type, scope, description)
-- Body text is not validated by default
+  - Summary/body rules:
+    - `capitalized`: Requires the first letter to be uppercase
+    - `oneLine`: Requires text to stay on a single line
+- Configurable validation rules for different parts of the commit message (type, scope, description, body)
+- Configurable strict length limits for description and body
+- Body text is not validated by default, but can be validated with `--body-rules`
+- Supports breaking-change headers such as `feat!: Summary` and `feat(scope)!: Summary`
 
 ## Installation
 
@@ -42,7 +47,10 @@ repos:
       args:
         - --type-rules=allowLatin
         - --scope-rules=allowScope
-        - --description-rules=noCyrillic
+        - --description-rules=noCyrillic,capitalized
+        - --body-rules=oneLine
+        - --description-length-limit=60
+        - --body-length-limit=72
 ```
 
 3. Install the commit-msg hook:
@@ -59,6 +67,12 @@ The hook validates commit messages against the following format:
 type(scope): description
 
 [optional body]
+```
+
+Breaking-change headers are also allowed:
+```
+type!: description
+type(scope)!: description
 ```
 
 ### Valid Commit Types
@@ -83,6 +97,9 @@ You can customize the validation rules using command line arguments:
 - `--type-rules`: Comma-separated rules for commit type (default: "allowLatin")
 - `--scope-rules`: Comma-separated rules for commit scope (default: "allowScope")
 - `--description-rules`: Comma-separated rules for commit description (default: "noCyrillic")
+- `--body-rules`: Comma-separated rules for commit body (default: "")
+- `--description-length-limit`: Strict description length limit; `0` disables the limit (default: 0)
+- `--body-length-limit`: Strict body length limit; `0` disables the limit (default: 0)
 
 Use `--scope-rules=allowPathScope` to allow slash-delimited scopes such as `app/api` or `this/is/some/path`.
 
@@ -95,6 +112,8 @@ docs(T-1): This is valid too
 feat(T1): Another valid example
 feat(task-123): Valid with hyphen
 feat(app/api): Valid with slash-delimited folders when using --scope-rules=allowPathScope
+feat!: Breaking change without scope
+feat(api)!: Breaking change with scope
 
 With кириллица in description (body is not validated by default)
 ```
@@ -107,6 +126,8 @@ feat[scope]: Wrong scope format          # Invalid scope format
 feat(-T1): Invalid scope format          # Scope can't start with hyphen
 feat(T1-): Invalid scope format          # Scope can't end with hyphen
 feat(app//api): Invalid scope format     # Scope can't contain empty slash segments
+feat(scope): not capitalized             # Invalid with --description-rules=capitalized
+feat(scope): Summary with 60+ chars...   # Invalid with --description-length-limit=60
 ```
 
 ## Contributing

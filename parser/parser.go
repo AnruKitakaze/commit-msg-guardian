@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/AnruKitakaze/commit-msg-guardian/rules"
@@ -10,10 +11,11 @@ import (
 
 // CommitMessage represents a parsed commit message
 type CommitMessage struct {
-	Type        string
-	Scope       string
-	Description string
-	Body        string
+	Type           string
+	Scope          string
+	BreakingChange bool
+	Description    string
+	Body           string
 }
 
 // ParseCommitMessage parses a commit message into its components
@@ -22,7 +24,7 @@ func ParseCommitMessage(message string) (*CommitMessage, error) {
 	header := lines[0]
 
 	// Parse header
-	headerPattern := regexp.MustCompile(`^(\w+)(?:\(([\w-]+(?:/[\w-]+)*)\))?: (.+)$`)
+	headerPattern := regexp.MustCompile(`^(\w+)(?:\(([\w-]+(?:/[\w-]+)*)\))?(!)?: (.+)$`)
 	matches := headerPattern.FindStringSubmatch(header)
 	if matches == nil {
 		return nil, fmt.Errorf("invalid commit message format")
@@ -39,24 +41,20 @@ func ParseCommitMessage(message string) (*CommitMessage, error) {
 	}
 
 	return &CommitMessage{
-		Type:        commitType,
-		Scope:       matches[2],
-		Description: matches[3],
-		Body:        body,
+		Type:           commitType,
+		Scope:          matches[2],
+		BreakingChange: matches[3] == "!",
+		Description:    matches[4],
+		Body:           body,
 	}, nil
 }
 
 func isValidCommitType(commitType string) bool {
-	for _, validType := range rules.ConventionalCommitTypes {
-		if commitType == validType {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(rules.ConventionalCommitTypes, commitType)
 }
 
 // ValidateWithRules validates different parts of the commit message with specified rules
-func (cm *CommitMessage) ValidateWithRules(typeRules, scopeRules, descriptionRules []string) error {
+func (cm *CommitMessage) ValidateWithRules(typeRules, scopeRules, descriptionRules, bodyRules []string) error {
 	// Validate type
 	if err := validateText(cm.Type, typeRules); err != nil {
 		return fmt.Errorf("type validation failed: %w", err)
@@ -74,6 +72,32 @@ func (cm *CommitMessage) ValidateWithRules(typeRules, scopeRules, descriptionRul
 		return fmt.Errorf("description validation failed: %w", err)
 	}
 
+	// Validate body
+	if err := validateText(cm.Body, bodyRules); err != nil {
+		return fmt.Errorf("body validation failed: %w", err)
+	}
+
+	return nil
+}
+
+// ValidateLengthLimits validates strict description and body length limits.
+func (cm *CommitMessage) ValidateLengthLimits(descriptionLimit, bodyLimit int) error {
+	if err := validateLengthLimit("description", cm.Description, descriptionLimit); err != nil {
+		return err
+	}
+	if err := validateLengthLimit("body", cm.Body, bodyLimit); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateLengthLimit(name, text string, limit int) error {
+	if limit == 0 {
+		return nil
+	}
+	if len([]rune(text)) >= limit {
+		return fmt.Errorf("%s must be shorter than %d characters", name, limit)
+	}
 	return nil
 }
 

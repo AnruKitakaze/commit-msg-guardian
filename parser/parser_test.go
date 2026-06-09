@@ -32,6 +32,27 @@ func TestParseCommitMessage(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name:    "valid breaking change without scope",
+			message: "feat!: add new feature",
+			want: &CommitMessage{
+				Type:           "feat",
+				BreakingChange: true,
+				Description:    "add new feature",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "valid breaking change with scope",
+			message: "feat(scope)!: add new feature",
+			want: &CommitMessage{
+				Type:           "feat",
+				Scope:          "scope",
+				BreakingChange: true,
+				Description:    "add new feature",
+			},
+			wantErr: false,
+		},
+		{
 			name:    "valid commit with slash-delimited scope",
 			message: "feat(app/api): add endpoint",
 			want: &CommitMessage{
@@ -104,6 +125,9 @@ It can span multiple lines`,
 				if got.Description != tt.want.Description {
 					t.Errorf("ParseCommitMessage() Description = %v, want %v", got.Description, tt.want.Description)
 				}
+				if got.BreakingChange != tt.want.BreakingChange {
+					t.Errorf("ParseCommitMessage() BreakingChange = %v, want %v", got.BreakingChange, tt.want.BreakingChange)
+				}
 				if !strings.EqualFold(got.Body, tt.want.Body) {
 					t.Errorf("ParseCommitMessage() Body = %v, want %v", got.Body, tt.want.Body)
 				}
@@ -119,6 +143,7 @@ func TestValidateWithRules(t *testing.T) {
 		typeRules  []string
 		scopeRules []string
 		descRules  []string
+		bodyRules  []string
 		wantErr    bool
 	}{
 		{
@@ -131,6 +156,7 @@ func TestValidateWithRules(t *testing.T) {
 			typeRules:  []string{"allowLatin"},
 			scopeRules: []string{"allowScope"},
 			descRules:  []string{"noCyrillic"},
+			bodyRules:  nil,
 			wantErr:    false,
 		},
 		{
@@ -143,7 +169,62 @@ func TestValidateWithRules(t *testing.T) {
 			typeRules:  []string{"allowLatin"},
 			scopeRules: []string{"allowPathScope"},
 			descRules:  []string{"noCyrillic"},
+			bodyRules:  nil,
 			wantErr:    false,
+		},
+		{
+			name: "capitalized description",
+			message: &CommitMessage{
+				Type:        "feat",
+				Scope:       "T-1",
+				Description: "Add new feature",
+			},
+			typeRules:  []string{"allowLatin"},
+			scopeRules: []string{"allowScope"},
+			descRules:  []string{"capitalized"},
+			bodyRules:  nil,
+			wantErr:    false,
+		},
+		{
+			name: "non-capitalized description",
+			message: &CommitMessage{
+				Type:        "feat",
+				Scope:       "T-1",
+				Description: "add new feature",
+			},
+			typeRules:  []string{"allowLatin"},
+			scopeRules: []string{"allowScope"},
+			descRules:  []string{"capitalized"},
+			bodyRules:  nil,
+			wantErr:    true,
+		},
+		{
+			name: "one-line body",
+			message: &CommitMessage{
+				Type:        "feat",
+				Scope:       "T-1",
+				Description: "add new feature",
+				Body:        "This body stays on one line",
+			},
+			typeRules:  []string{"allowLatin"},
+			scopeRules: []string{"allowScope"},
+			descRules:  []string{"noCyrillic"},
+			bodyRules:  []string{"oneLine"},
+			wantErr:    false,
+		},
+		{
+			name: "multi-line body",
+			message: &CommitMessage{
+				Type:        "feat",
+				Scope:       "T-1",
+				Description: "add new feature",
+				Body:        "First body line\nSecond body line",
+			},
+			typeRules:  []string{"allowLatin"},
+			scopeRules: []string{"allowScope"},
+			descRules:  []string{"noCyrillic"},
+			bodyRules:  []string{"oneLine"},
+			wantErr:    true,
 		},
 		{
 			name: "cyrillic in description",
@@ -155,6 +236,7 @@ func TestValidateWithRules(t *testing.T) {
 			typeRules:  []string{"allowLatin"},
 			scopeRules: []string{"allowScope"},
 			descRules:  []string{"noCyrillic"},
+			bodyRules:  nil,
 			wantErr:    true,
 		},
 		{
@@ -167,6 +249,7 @@ func TestValidateWithRules(t *testing.T) {
 			typeRules:  []string{"allowLatin"},
 			scopeRules: []string{"allowScope"},
 			descRules:  []string{"noCyrillic"},
+			bodyRules:  nil,
 			wantErr:    true,
 		},
 		{
@@ -179,6 +262,7 @@ func TestValidateWithRules(t *testing.T) {
 			typeRules:  []string{"allowLatin", "noDigits"},
 			scopeRules: []string{"allowScope"},
 			descRules:  []string{"noCyrillic"},
+			bodyRules:  nil,
 			wantErr:    true,
 		},
 		{
@@ -197,9 +281,81 @@ func TestValidateWithRules(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.message.ValidateWithRules(tt.typeRules, tt.scopeRules, tt.descRules)
+			err := tt.message.ValidateWithRules(tt.typeRules, tt.scopeRules, tt.descRules, tt.bodyRules)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateWithRules() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateLengthLimits(t *testing.T) {
+	tests := []struct {
+		name             string
+		message          *CommitMessage
+		descriptionLimit int
+		bodyLimit        int
+		wantErr          bool
+	}{
+		{
+			name: "disabled limits",
+			message: &CommitMessage{
+				Description: "Any description length",
+				Body:        "Any body length",
+			},
+			descriptionLimit: 0,
+			bodyLimit:        0,
+			wantErr:          false,
+		},
+		{
+			name: "description under strict limit",
+			message: &CommitMessage{
+				Description: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			},
+			descriptionLimit: 60,
+			wantErr:          false,
+		},
+		{
+			name: "description at strict limit",
+			message: &CommitMessage{
+				Description: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			},
+			descriptionLimit: 60,
+			wantErr:          true,
+		},
+		{
+			name: "body under strict limit",
+			message: &CommitMessage{
+				Body: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			},
+			bodyLimit: 72,
+			wantErr:   false,
+		},
+		{
+			name: "body at strict limit",
+			message: &CommitMessage{
+				Body: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			},
+			bodyLimit: 72,
+			wantErr:   true,
+		},
+		{
+			name: "unicode rune length",
+			message: &CommitMessage{
+				Description: "ЖЖЖ",
+				Body:        "ЖЖЖЖ",
+			},
+			descriptionLimit: 4,
+			bodyLimit:        4,
+			wantErr:          true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.message.ValidateLengthLimits(tt.descriptionLimit, tt.bodyLimit)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateLengthLimits() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
