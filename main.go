@@ -15,8 +15,8 @@ func main() {
 	scopeRules := flag.String("scope-rules", "allowScope", "Comma-separated rules for commit scope")
 	descriptionRules := flag.String("description-rules", "noCyrillic", "Comma-separated rules for commit description")
 	bodyRules := flag.String("body-rules", "", "Comma-separated rules for commit body")
-	descriptionLengthLimit := flag.Int("description-length-limit", 0, "Strict description length limit; 0 disables the limit")
-	bodyLengthLimit := flag.Int("body-length-limit", 0, "Strict body length limit; 0 disables the limit")
+	descriptionLengthLimit := flag.Int("description-length-limit", 0, "Maximum allowed description length; 0 disables the limit")
+	bodyLengthLimit := flag.Int("body-length-limit", 0, "Maximum allowed body length; 0 disables the limit")
 
 	flag.Parse()
 

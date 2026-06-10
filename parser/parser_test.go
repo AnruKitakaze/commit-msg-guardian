@@ -296,6 +296,7 @@ func TestValidateLengthLimits(t *testing.T) {
 		descriptionLimit int
 		bodyLimit        int
 		wantErr          bool
+		wantErrText      string
 	}{
 		{
 			name: "disabled limits",
@@ -308,7 +309,7 @@ func TestValidateLengthLimits(t *testing.T) {
 			wantErr:          false,
 		},
 		{
-			name: "description under strict limit",
+			name: "description under limit",
 			message: &CommitMessage{
 				Description: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 			},
@@ -316,15 +317,24 @@ func TestValidateLengthLimits(t *testing.T) {
 			wantErr:          false,
 		},
 		{
-			name: "description at strict limit",
+			name: "description at limit",
 			message: &CommitMessage{
 				Description: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 			},
 			descriptionLimit: 60,
-			wantErr:          true,
+			wantErr:          false,
 		},
 		{
-			name: "body under strict limit",
+			name: "description over limit",
+			message: &CommitMessage{
+				Description: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			},
+			descriptionLimit: 60,
+			wantErr:          true,
+			wantErrText:      "description must be no longer than 60 characters, got 61",
+		},
+		{
+			name: "body under limit",
 			message: &CommitMessage{
 				Body: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 			},
@@ -332,12 +342,21 @@ func TestValidateLengthLimits(t *testing.T) {
 			wantErr:   false,
 		},
 		{
-			name: "body at strict limit",
+			name: "body at limit",
 			message: &CommitMessage{
 				Body: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 			},
 			bodyLimit: 72,
-			wantErr:   true,
+			wantErr:   false,
+		},
+		{
+			name: "body over limit",
+			message: &CommitMessage{
+				Body: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			},
+			bodyLimit:   72,
+			wantErr:     true,
+			wantErrText: "body must be no longer than 72 characters, got 73",
 		},
 		{
 			name: "unicode rune length",
@@ -347,7 +366,16 @@ func TestValidateLengthLimits(t *testing.T) {
 			},
 			descriptionLimit: 4,
 			bodyLimit:        4,
+			wantErr:          false,
+		},
+		{
+			name: "unicode rune length over limit",
+			message: &CommitMessage{
+				Description: "ЖЖЖЖЖ",
+			},
+			descriptionLimit: 4,
 			wantErr:          true,
+			wantErrText:      "description must be no longer than 4 characters, got 5",
 		},
 	}
 
@@ -356,6 +384,9 @@ func TestValidateLengthLimits(t *testing.T) {
 			err := tt.message.ValidateLengthLimits(tt.descriptionLimit, tt.bodyLimit)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidateLengthLimits() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErrText != "" && err.Error() != tt.wantErrText {
+				t.Errorf("ValidateLengthLimits() error = %v, want %v", err, tt.wantErrText)
 			}
 		})
 	}

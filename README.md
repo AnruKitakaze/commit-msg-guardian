@@ -23,7 +23,7 @@ A Git pre-commit hook that validates commit messages against specified rules, en
     - `capitalized`: Requires the first letter to be uppercase
     - `oneLine`: Requires text to stay on a single line
 - Configurable validation rules for different parts of the commit message (type, scope, description, body)
-- Configurable strict length limits for description and body
+- Configurable maximum length limits for description and body
 - Body text is not validated by default, but can be validated with `--body-rules`
 - Supports breaking-change headers such as `feat!: Summary` and `feat(scope)!: Summary`
 
@@ -98,8 +98,8 @@ You can customize the validation rules using command line arguments:
 - `--scope-rules`: Comma-separated rules for commit scope (default: "allowScope")
 - `--description-rules`: Comma-separated rules for commit description (default: "noCyrillic")
 - `--body-rules`: Comma-separated rules for commit body (default: "")
-- `--description-length-limit`: Strict description length limit; `0` disables the limit (default: 0)
-- `--body-length-limit`: Strict body length limit; `0` disables the limit (default: 0)
+- `--description-length-limit`: Maximum allowed description length; `0` disables the limit (default: 0)
+- `--body-length-limit`: Maximum allowed body length; `0` disables the limit (default: 0)
 
 Use `--scope-rules=allowPathScope` to allow slash-delimited scopes such as `app/api` or `this/is/some/path`.
 
@@ -127,7 +127,7 @@ feat(-T1): Invalid scope format          # Scope can't start with hyphen
 feat(T1-): Invalid scope format          # Scope can't end with hyphen
 feat(app//api): Invalid scope format     # Scope can't contain empty slash segments
 feat(scope): not capitalized             # Invalid with --description-rules=capitalized
-feat(scope): Summary with 60+ chars...   # Invalid with --description-length-limit=60
+feat(scope): Summary with 61+ chars...   # Invalid with --description-length-limit=60
 ```
 
 ## Contributing

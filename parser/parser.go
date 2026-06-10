@@ -95,8 +95,9 @@ func validateLengthLimit(name, text string, limit int) error {
 	if limit == 0 {
 		return nil
 	}
-	if len([]rune(text)) >= limit {
-		return fmt.Errorf("%s must be shorter than %d characters", name, limit)
+	length := len([]rune(text))
+	if length > limit {
+		return fmt.Errorf("%s must be no longer than %d characters, got %d", name, limit, length)
 	}
 	return nil
 }
