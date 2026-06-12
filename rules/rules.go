@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 // ConventionalCommitTypes defines allowed commit types
@@ -42,6 +43,10 @@ func RuleFactory(ruleName string) (Rule, error) {
 		return &AllowScopeRule{}, nil
 	case "allowpathscope":
 		return &AllowPathScopeRule{}, nil
+	case "capitalized":
+		return &CapitalizedRule{}, nil
+	case "oneline":
+		return &OneLineRule{}, nil
 	default:
 		return nil, fmt.Errorf("unknown rule: %s", ruleName)
 	}
@@ -153,6 +158,32 @@ type AllowPathScopeRule struct{}
 func (r *AllowPathScopeRule) Validate(text string) error {
 	if !regexp.MustCompile(`^[a-zA-Z0-9]+(?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:/[a-zA-Z0-9]+(?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*$`).MatchString(text) {
 		return fmt.Errorf("scope must contain slash-delimited segments that start and end with alphanumeric characters and contain only Latin letters, digits, and hyphens")
+	}
+	return nil
+}
+
+// CapitalizedRule requires the first letter to be uppercase.
+type CapitalizedRule struct{}
+
+func (r *CapitalizedRule) Validate(text string) error {
+	for _, char := range text {
+		if !unicode.IsLetter(char) {
+			continue
+		}
+		if !unicode.IsUpper(char) {
+			return fmt.Errorf("text must start with a capitalized letter")
+		}
+		return nil
+	}
+	return nil
+}
+
+// OneLineRule prevents multiline text.
+type OneLineRule struct{}
+
+func (r *OneLineRule) Validate(text string) error {
+	if strings.Contains(text, "\n") {
+		return fmt.Errorf("text must be one line")
 	}
 	return nil
 }

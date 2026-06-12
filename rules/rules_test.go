@@ -21,6 +21,8 @@ func TestRuleFactory(t *testing.T) {
 		{"valid allowdigits", "allowdigits", false},
 		{"valid allowscope", "allowscope", false},
 		{"valid allowpathscope", "allowpathscope", false},
+		{"valid capitalized", "capitalized", false},
+		{"valid oneline", "oneline", false},
 		{"invalid rule", "nonexistent", true},
 		// Case insensitivity tests
 		{"uppercase rule", "NOCYRILLIC", false},
@@ -271,6 +273,41 @@ func TestAllowPathScopeRule(t *testing.T) {
 	}
 
 	runRuleTests(t, "AllowPathScopeRule", rule, tests)
+}
+
+func TestCapitalizedRule(t *testing.T) {
+	rule := &CapitalizedRule{}
+	tests := []struct {
+		name    string
+		text    string
+		wantErr bool
+	}{
+		{"capitalized", "Summary", false},
+		{"lowercase", "summary", true},
+		{"capitalized after punctuation", "[WIP] Summary", false},
+		{"lowercase after punctuation", "[wip] summary", true},
+		{"digits before capitalized", "123 Summary", false},
+		{"no letters", "123 !?", false},
+		{"empty string", "", false},
+	}
+
+	runRuleTests(t, "CapitalizedRule", rule, tests)
+}
+
+func TestOneLineRule(t *testing.T) {
+	rule := &OneLineRule{}
+	tests := []struct {
+		name    string
+		text    string
+		wantErr bool
+	}{
+		{"one line", "This is one line", false},
+		{"empty string", "", false},
+		{"two lines", "First line\nSecond line", true},
+		{"blank line", "First line\n\nSecond line", true},
+	}
+
+	runRuleTests(t, "OneLineRule", rule, tests)
 }
 
 // Helper function to run rule tests

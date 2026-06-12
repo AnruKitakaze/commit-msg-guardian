@@ -27,3 +27,6 @@ go.work.sum
 # VSCode
 .vscode
 commit-msg-guardian
+
+# OS specific
+.DS_Store
