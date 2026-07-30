@@ -22,6 +22,8 @@ A Git pre-commit hook that validates commit messages against specified rules, en
   - Summary/body rules:
     - `capitalized`: Requires the first letter to be uppercase
     - `oneLine`: Requires text to stay on a single line
+    - `trailingPeriod`: Requires text to end with a period
+    - `noTrailingPeriod`: Prevents text from ending with a period
 - Configurable validation rules for different parts of the commit message (type, scope, description, body)
 - Configurable maximum length limits for description and body
 - Body text is not validated by default, but can be validated with `--body-rules`
@@ -102,6 +104,7 @@ You can customize the validation rules using command line arguments:
 - `--body-length-limit`: Maximum allowed body length; `0` disables the limit (default: 0)
 
 Use `--scope-rules=allowPathScope` to allow slash-delimited scopes such as `app/api` or `this/is/some/path`.
+Use `--description-rules=trailingPeriod` or `--body-rules=trailingPeriod` to require a final period. Use `noTrailingPeriod` in either option to forbid one.
 
 ### Examples
 

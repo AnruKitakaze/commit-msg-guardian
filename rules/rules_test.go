@@ -23,6 +23,8 @@ func TestRuleFactory(t *testing.T) {
 		{"valid allowpathscope", "allowpathscope", false},
 		{"valid capitalized", "capitalized", false},
 		{"valid oneline", "oneline", false},
+		{"valid trailing period", "trailingPeriod", false},
+		{"valid no trailing period", "noTrailingPeriod", false},
 		{"invalid rule", "nonexistent", true},
 		// Case insensitivity tests
 		{"uppercase rule", "NOCYRILLIC", false},
@@ -308,6 +310,40 @@ func TestOneLineRule(t *testing.T) {
 	}
 
 	runRuleTests(t, "OneLineRule", rule, tests)
+}
+
+func TestTrailingPeriodRule(t *testing.T) {
+	rule := &TrailingPeriodRule{}
+	tests := []struct {
+		name    string
+		text    string
+		wantErr bool
+	}{
+		{"sentence with period", "This is a commit message.", false},
+		{"period after abbreviation", "Update e.g.", false},
+		{"sentence without period", "This is a commit message", true},
+		{"empty string", "", true},
+		{"unicode ellipsis", "This is a commit message…", true},
+	}
+
+	runRuleTests(t, "TrailingPeriodRule", rule, tests)
+}
+
+func TestNoTrailingPeriodRule(t *testing.T) {
+	rule := &NoTrailingPeriodRule{}
+	tests := []struct {
+		name    string
+		text    string
+		wantErr bool
+	}{
+		{"sentence without period", "This is a commit message", false},
+		{"period within text", "Update v1.2 now", false},
+		{"sentence with period", "This is a commit message.", true},
+		{"empty string", "", false},
+		{"unicode ellipsis", "This is a commit message…", false},
+	}
+
+	runRuleTests(t, "NoTrailingPeriodRule", rule, tests)
 }
 
 // Helper function to run rule tests
