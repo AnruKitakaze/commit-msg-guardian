@@ -77,6 +77,34 @@ It can span multiple lines`,
 			wantErr: false,
 		},
 		{
+			name: "valid commit with Git editor comments",
+			message: `feat(scope): add new feature
+
+This is the body of the commit message
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch main`,
+			want: &CommitMessage{
+				Type:        "feat",
+				Scope:       "scope",
+				Description: "add new feature",
+				Body:        "This is the body of the commit message",
+			},
+			wantErr: false,
+		},
+		{
+			name: "Git editor comments before header",
+			message: `# Please enter the commit message for your changes.
+feat: add new feature
+# On branch main`,
+			want: &CommitMessage{
+				Type:        "feat",
+				Description: "add new feature",
+			},
+			wantErr: false,
+		},
+		{
 			name:    "invalid commit type",
 			message: "invalid: not a valid type",
 			wantErr: true,
@@ -133,6 +161,15 @@ It can span multiple lines`,
 				}
 			}
 		})
+	}
+}
+
+func TestRemoveCommentLines(t *testing.T) {
+	message := "feat: add new feature\n # This is content, not a Git comment\n# This is a Git comment\n"
+	want := "feat: add new feature\n # This is content, not a Git comment\n"
+
+	if got := removeCommentLines(message); got != want {
+		t.Errorf("removeCommentLines() = %q, want %q", got, want)
 	}
 }
 
