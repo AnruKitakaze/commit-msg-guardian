@@ -27,6 +27,7 @@ A Git pre-commit hook that validates commit messages against specified rules, en
 - Configurable validation rules for different parts of the commit message (type, scope, description, body)
 - Configurable maximum length limits for description and body
 - Body text is not validated by default, but can be validated with `--body-rules`
+- Ignores Git editor comments: lines starting with `#` do not affect validation
 - Supports breaking-change headers such as `feat!: Summary` and `feat(scope)!: Summary`
 
 ## Installation

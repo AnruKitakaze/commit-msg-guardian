@@ -20,6 +20,7 @@ type CommitMessage struct {
 
 // ParseCommitMessage parses a commit message into its components
 func ParseCommitMessage(message string) (*CommitMessage, error) {
+	message = removeCommentLines(message)
 	lines := strings.SplitN(message, "\n", 2)
 	header := lines[0]
 
@@ -47,6 +48,19 @@ func ParseCommitMessage(message string) (*CommitMessage, error) {
 		Description:    matches[4],
 		Body:           body,
 	}, nil
+}
+
+// removeCommentLines removes Git's editor hint lines. Git ignores lines whose
+// first character is '#', so validation must ignore them as well.
+func removeCommentLines(message string) string {
+	lines := strings.Split(message, "\n")
+	filteredLines := make([]string, 0, len(lines))
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "#") {
+			filteredLines = append(filteredLines, line)
+		}
+	}
+	return strings.Join(filteredLines, "\n")
 }
 
 func isValidCommitType(commitType string) bool {
