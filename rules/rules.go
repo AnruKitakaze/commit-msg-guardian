@@ -47,6 +47,10 @@ func RuleFactory(ruleName string) (Rule, error) {
 		return &CapitalizedRule{}, nil
 	case "oneline":
 		return &OneLineRule{}, nil
+	case "trailingperiod":
+		return &TrailingPeriodRule{}, nil
+	case "notrailingperiod":
+		return &NoTrailingPeriodRule{}, nil
 	default:
 		return nil, fmt.Errorf("unknown rule: %s", ruleName)
 	}
@@ -184,6 +188,26 @@ type OneLineRule struct{}
 func (r *OneLineRule) Validate(text string) error {
 	if strings.Contains(text, "\n") {
 		return fmt.Errorf("text must be one line")
+	}
+	return nil
+}
+
+// TrailingPeriodRule requires text to end with a period.
+type TrailingPeriodRule struct{}
+
+func (r *TrailingPeriodRule) Validate(text string) error {
+	if !strings.HasSuffix(text, ".") {
+		return fmt.Errorf("text must end with a period")
+	}
+	return nil
+}
+
+// NoTrailingPeriodRule prevents text from ending with a period.
+type NoTrailingPeriodRule struct{}
+
+func (r *NoTrailingPeriodRule) Validate(text string) error {
+	if strings.HasSuffix(text, ".") {
+		return fmt.Errorf("text must not end with a period")
 	}
 	return nil
 }
