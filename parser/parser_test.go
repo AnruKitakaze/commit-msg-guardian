@@ -105,6 +105,29 @@ feat: add new feature
 			wantErr: false,
 		},
 		{
+			name: "Git scissors line and diff after body",
+			message: `feat(scope): add new feature
+
+This body is one line
+# ------------------------ >8 ------------------------
+# Do not modify or remove the line above.
+# Everything below it will be ignored.
+diff --git a/file.go b/file.go
+index 1234567..abcdefg 100644
+--- a/file.go
++++ b/file.go
+@@ -1 +1 @@
+-old
++new`,
+			want: &CommitMessage{
+				Type:        "feat",
+				Scope:       "scope",
+				Description: "add new feature",
+				Body:        "This body is one line",
+			},
+			wantErr: false,
+		},
+		{
 			name:    "invalid commit type",
 			message: "invalid: not a valid type",
 			wantErr: true,
@@ -165,11 +188,27 @@ feat: add new feature
 }
 
 func TestRemoveCommentLines(t *testing.T) {
-	message := "feat: add new feature\n # This is content, not a Git comment\n# This is a Git comment\n"
-	want := "feat: add new feature\n # This is content, not a Git comment\n"
+	message := "feat: add new feature\n # This is content, not a Git comment\n# This is a Git comment\n# ------------------------ >8 ------------------------\ndiff --git a/file.go b/file.go\n"
+	want := "feat: add new feature\n # This is content, not a Git comment"
 
 	if got := removeCommentLines(message); got != want {
 		t.Errorf("removeCommentLines() = %q, want %q", got, want)
+	}
+}
+
+func TestScissorsLineDoesNotBreakOneLineBodyValidation(t *testing.T) {
+	message, err := ParseCommitMessage(`feat: add new feature
+
+This body is one line
+# ------------------------ >8 ------------------------
+diff --git a/file.go b/file.go`)
+	if err != nil {
+		t.Fatalf("ParseCommitMessage() error = %v", err)
+	}
+
+	err = message.ValidateWithRules(nil, nil, nil, []string{"oneLine"})
+	if err != nil {
+		t.Errorf("ValidateWithRules() error = %v, want nil", err)
 	}
 }
 

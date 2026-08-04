@@ -9,6 +9,8 @@ import (
 	"github.com/AnruKitakaze/commit-msg-guardian/rules"
 )
 
+const scissorsLine = "# ------------------------ >8 ------------------------"
+
 // CommitMessage represents a parsed commit message
 type CommitMessage struct {
 	Type           string
@@ -51,11 +53,15 @@ func ParseCommitMessage(message string) (*CommitMessage, error) {
 }
 
 // removeCommentLines removes Git's editor hint lines. Git ignores lines whose
-// first character is '#', so validation must ignore them as well.
+// first character is '#'. A scissors line marks the start of content Git
+// discards, so all following lines must be ignored as well.
 func removeCommentLines(message string) string {
 	lines := strings.Split(message, "\n")
 	filteredLines := make([]string, 0, len(lines))
 	for _, line := range lines {
+		if line == scissorsLine {
+			break
+		}
 		if !strings.HasPrefix(line, "#") {
 			filteredLines = append(filteredLines, line)
 		}
