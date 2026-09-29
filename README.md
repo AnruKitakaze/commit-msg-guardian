@@ -4,21 +4,38 @@ Commit Message Guardian validates Git commit messages locally through a `commit-
 
 ## Configure a project
 
-Add `.commit-msg-guardian.yaml` at the Git repository root:
+Add `.commit-msg-guardian.yaml` at the Git repository root, here is minimalistic example:
 
 ```yaml
+# Conventional Commits, including `!:`
 version: 1
 commit:
   formats:
     - id: conventional
-      type: {}
-      separators: [":"]
+      type:
+        allowed: [feat, fix, docs, chore]
+      scope:
+        brackets: round
+        required: false
+      separators: [":", "!:"]
 ```
 
-- **OK:** `feat: add feature`; `fix: correct output`; `chore: bump packageX`.
-- **Not OK:** `add feature` (type missing); `feat(api): add feature` (scope not configured).
+**OK:**
 
-This is a small Conventional-style policy. A format is built from the blocks you include: `type`, `scope`, `separators`, `subject`, `body`, and `trailers`. For optional scopes, `!:` separators, Jira keys, Renovate, CI bases, and a [complete field reference](docs/configuration-examples.md#complete-field-reference), see the [configuration examples](docs/configuration-examples.md). The examples are copyable YAML, not presets loaded by the tool.
+- `feat: add endpoint`
+- `fix(api): correct response`
+- `feat!: replace old API`
+- `feat(api)!: replace old API`
+
+**Not OK:**
+
+- `custom: add endpoint` (type not listed)
+- `feat[api]: add endpoint` (wrong brackets)
+- `feat! : replace API` (wrong separator)
+
+This is a small Conventional-style policy. A format is built from the blocks you include: `type`, `scope`, `separators`, `subject`, `body`, and `trailers`. For optional scopes, `!:` separators, Jira keys, renovate bot commits, CI bases, and a [complete field reference](docs/configuration-examples.md#complete-field-reference), see the [configuration examples](docs/configuration-examples.md).
+
+*The examples are copyable YAML, not presets loaded by the tool.*
 
 If your team uses both Jira task commits and taskless chores, configure two formats as shown in the [permanent policy example](docs/configuration-examples.md#permanent-policy-with-two-formats).
 
