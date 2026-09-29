@@ -1,12 +1,8 @@
 - id: commit-msg-guardian
   name: commit-msg-guardian
-  description: Validates commit messages against specified rules (language, format, etc.)
-  entry: commit-msg-guardian
+  description: Validates commit messages against the project's format and character policy
+  entry: commit-msg-guardian check-file
   language: golang
   pass_filenames: true
   stages:
     - commit-msg
-  args:
-    - --type-rules=allowLatin
-    - --scope-rules=allowScope
-    - --description-rules=noCyrillic

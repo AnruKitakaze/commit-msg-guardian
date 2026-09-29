@@ -1,0 +1,21 @@
+version: 1
+commit:
+  formats:
+    - id: conventional
+      type:
+        allowed: [feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert]
+        characters:
+          allowed: [Latin, digit, whitespace, punctuation]
+      scope:
+        brackets: round
+        required: false
+        structure: flat              # feat(api-v2): ...
+        # structure: slash-separated # feat(api/client-v2): ...
+      separators: [":", "!:"]       # feat!: ... is a breaking-change header
+      subject:
+        characters:
+          forbidden: [Cyrillic]
+ci:
+  commits:
+    base:
+      ref: origin/main

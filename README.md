@@ -1,139 +1,81 @@
 # Commit Message Guardian
 
-A Git pre-commit hook that validates commit messages against specified rules, ensuring consistent message formatting and language usage.
+Commit Message Guardian validates Git commit messages locally through a `commit-msg` hook and in CI against a range of commits. Both paths read the same project-owned `.commit-msg-guardian.yaml` file.
 
-## Features
+## Configure a project
 
-- Validates commit messages against the [Conventional Commits](https://www.conventionalcommits.org/) format
-- Supports various text validation rules:
-  - Restrictive rules (allow ONLY specified characters):
-    - `noCyrillic`: Prevents Cyrillic characters
-    - `noLatin`: Prevents Latin characters
-    - `noDigits`: Prevents digits
-    - `cyrillicOnly`: Allows only Cyrillic characters
-    - `latinOnly`: Allows only Latin characters
-    - `digitsOnly`: Allows only digits
-  - Permissive rules (ALLOW but don't require):
-    - `allowLatin`: Allows Latin characters, digits, and basic punctuation
-    - `allowCyrillic`: Allows Cyrillic characters, digits, and basic punctuation
-    - `allowDigits`: Allows Latin characters, digits, and basic punctuation
-    - `allowScope`: Special rule for scopes that allows Latin, digits, and hyphens (must start and end with alphanumeric)
-    - `allowPathScope`: Special rule for scopes that allows slash-delimited `allowScope` path segments
-  - Summary/body rules:
-    - `capitalized`: Requires the first letter to be uppercase
-    - `oneLine`: Requires text to stay on a single line
-    - `trailingPeriod`: Requires text to end with a period
-    - `noTrailingPeriod`: Prevents text from ending with a period
-- Configurable validation rules for different parts of the commit message (type, scope, description, body)
-- Configurable maximum length limits for description and body
-- Body text is not validated by default, but can be validated with `--body-rules`
-- Ignores Git editor comments and content after Git's scissors line (`# ------------------------ >8 ------------------------`)
-- Supports breaking-change headers such as `feat!: Summary` and `feat(scope)!: Summary`
+Add `.commit-msg-guardian.yaml` at the Git repository root:
 
-## Installation
-
-To use this hook in your project:
-
-1. Install [pre-commit](https://pre-commit.com/) if you haven't already:
-```bash
-pip install pre-commit
+```yaml
+version: 1
+commit:
+  formats:
+    - id: conventional
+      type: {}
+      separators: [":"]
 ```
 
-2. Add this to your `.pre-commit-config.yaml`:
+- **OK:** `feat: add feature`; `fix: correct output`; `chore: bump packageX`.
+- **Not OK:** `add feature` (type missing); `feat(api): add feature` (scope not configured).
+
+This is a small Conventional-style policy. A format is built from the blocks you include: `type`, `scope`, `separators`, `subject`, `body`, and `trailers`. For optional scopes, `!:` separators, Jira keys, Renovate, CI bases, and a [complete field reference](docs/configuration-examples.md#complete-field-reference), see the [configuration examples](docs/configuration-examples.md). The examples are copyable YAML, not presets loaded by the tool.
+
+If your team uses both Jira task commits and taskless chores, configure two formats as shown in the [permanent policy example](docs/configuration-examples.md#permanent-policy-with-two-formats).
+
+Use `subject.characters` to constrain writing systems; the examples include [Latin-only subjects](docs/configuration-examples.md#english-subject) and [Cyrillic subjects with English terms](docs/configuration-examples.md#cyrillic-subject-with-english-terms).
+
+The config file and its required fields must be present. Every command validates the configuration before checking messages; a missing file or required field fails with a nonzero exit code and an error identifying the relevant configuration field or format. Unknown keys, character groups, contradictory settings, and invalid values also fail. Run `commit-msg-guardian check-config` after editing the file.
+
+Optional fields do not add restrictions when omitted. A missing `type` or `scope` block means that component is absent from the header; an empty `type: {}` allows any syntactically valid type. `subject` is the only component every format has. See [required fields and omitted checks](docs/configuration-examples.md#required-fields-and-omitted-checks) for details.
+
+## Use the local hook
+
+Add this repository to `.pre-commit-config.yaml`:
+
 ```yaml
 repos:
-- repo: https://github.com/AnruKitakaze/commit-msg-guardian
-  rev: v0.1.6  # Use the latest version
-  hooks:
-    - id: commit-msg-guardian
-      # Optional: override default rules
-      args:
-        - --type-rules=allowLatin
-        - --scope-rules=allowScope
-        - --description-rules=noCyrillic,capitalized
-        - --body-rules=oneLine
-        - --description-length-limit=60
-        - --body-length-limit=72
+  - repo: https://github.com/AnruKitakaze/commit-msg-guardian
+    rev: <major-release-tag>
+    hooks:
+      - id: commit-msg-guardian
 ```
 
-3. Install the commit-msg hook:
-```bash
-pre-commit install --hook-type commit-msg
+Pin `rev` to a published release tag, then run `pre-commit install --hook-type commit-msg`. The hook calls `commit-msg-guardian check-file <message-file>`.
+
+## Check commits in CI
+
+Add a base to the same project file:
+
+```yaml
+ci:
+  commits:
+    base:
+      ref: origin/main
 ```
 
-**Note**: The standard `pre-commit install` command won't work for this hook as it's a commit-msg hook, not a pre-commit hook. Make sure to use the command above.
+Install the binary in the CI job, fetch full Git history and the target ref, then run:
 
-## Usage
-
-The hook validates commit messages against the following format:
-```
-type(scope): description
-
-[optional body]
+```sh
+commit-msg-guardian check-range
 ```
 
-Breaking-change headers are also allowed:
-```
-type!: description
-type(scope)!: description
-```
+`ci.commits.base.ref` can be a fixed ref such as `origin/main` or `origin/release/something`. For a target branch chosen by the CI job, configure `ci.commits.base.env: COMMIT_MSG_GUARDIAN_BASE_REF` and provide that variable in the job. Exactly one of `ref` and `env` is allowed. `--head <ref>` selects the source head when CI checks out a synthetic merge commit; otherwise `HEAD` is used.
 
-### Valid Commit Types
+The command prints the resolved base and head SHA, then checks every commit reachable from head but not from base. If both refs resolve to the same commit, it checks that commit once, which also covers a direct commit to the target branch. Missing refs, missing environment variables, invalid configs, and invalid messages fail the command. A CI platform can mark this job optional; for example GitLab uses `allow_failure: true`. The validator still exits with an error so the failed check remains visible.
 
-The following commit types are supported:
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes (formatting, etc.)
-- `refactor`: Code refactoring
-- `perf`: Performance improvements
-- `test`: Adding or modifying tests
-- `build`: Build system changes
-- `ci`: CI configuration changes
-- `chore`: General maintenance
-- `revert`: Reverting changes
+Additional commands:
 
-### Command Line Arguments
-
-You can customize the validation rules using command line arguments:
-
-- `--type-rules`: Comma-separated rules for commit type (default: "allowLatin")
-- `--scope-rules`: Comma-separated rules for commit scope (default: "allowScope")
-- `--description-rules`: Comma-separated rules for commit description (default: "noCyrillic")
-- `--body-rules`: Comma-separated rules for commit body (default: "")
-- `--description-length-limit`: Maximum allowed description length; `0` disables the limit (default: 0)
-- `--body-length-limit`: Maximum allowed body length; `0` disables the limit (default: 0)
-
-Use `--scope-rules=allowPathScope` to allow slash-delimited scopes such as `app/api` or `this/is/some/path`.
-Use `--description-rules=trailingPeriod` or `--body-rules=trailingPeriod` to require a final period. Use `noTrailingPeriod` in either option to forbid one.
-
-### Examples
-
-Valid commit messages:
-```
-feat(TGK-1827): This is an example
-docs(T-1): This is valid too
-feat(T1): Another valid example
-feat(task-123): Valid with hyphen
-feat(app/api): Valid with slash-delimited folders when using --scope-rules=allowPathScope
-feat!: Breaking change without scope
-feat(api)!: Breaking change with scope
-
-With кириллица in description (body is not validated by default)
+```sh
+commit-msg-guardian check-file <message-file>
+commit-msg-guardian check-commit <sha-or-ref>
+commit-msg-guardian check-config
+commit-msg-guardian --config path/to/policy.yaml check-config
 ```
 
-Invalid commit messages:
-```
-feat(TGK-1827): Забыл убрать кириллицу   # Contains Cyrillic in description
-random: Not a valid type                 # Invalid commit type
-feat[scope]: Wrong scope format          # Invalid scope format
-feat(-T1): Invalid scope format          # Scope can't start with hyphen
-feat(T1-): Invalid scope format          # Scope can't end with hyphen
-feat(app//api): Invalid scope format     # Scope can't contain empty slash segments
-feat(scope): not capitalized             # Invalid with --description-rules=capitalized
-feat(scope): Summary with 61+ chars...   # Invalid with --description-length-limit=60
-```
+All commands ignore lines starting with `#` and discard the scissors line and everything after it. This is Commit Message Guardian's rule even if Git stored those lines literally, for example with `git commit -m`.
 
-## Contributing
+## Migrate from v0.x
 
-Feel free to open issues and pull requests!
+The [migration guide](docs/migration-guide.md) maps every old flag to YAML, shows the old default policy, and covers hook and CI changes. It includes a ready-to-use prompt for an AI assistant. The old CLI flags and Go parser API were removed.
+
+The executable remains at the module root, so `go install github.com/AnruKitakaze/commit-msg-guardian@<version>` keeps its existing path. `config` and `validator` are importable packages; `internal` packages are implementation details.
