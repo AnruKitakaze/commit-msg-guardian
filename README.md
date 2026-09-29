@@ -2,6 +2,15 @@
 
 Commit Message Guardian validates Git commit messages locally through a `commit-msg` hook and in CI against a range of commits. Both paths read the same project-owned `.commit-msg-guardian.yaml` file.
 
+## Choose the characters your team uses
+
+Use `characters.allowed`, `characters.required`, and `characters.forbidden` under `type`, `scope`, `subject`, or `body`:
+
+- Writing systems: `Latin`, `Cyrillic`, `Han`, `Greek`, `Arabic`, `Hebrew`, `Hiragana`, `Katakana`, `Hangul`, and other [Unicode scripts](https://unicode.org/reports/tr24/).
+- Other groups: `letter`, `other_letter`, `digit`, `whitespace`, `punctuation`, `symbol`, `mark`, and `other`.
+
+Script names match letters. Allow spaces, digits, punctuation, and symbols separately when needed. See the [character group examples](docs/configuration-examples.md#character-groups) for mixed-script subjects and common surprises such as `+` in `C++`.
+
 ## Configure a project
 
 Add `.commit-msg-guardian.yaml` at the Git repository root, here is minimalistic example:
@@ -39,7 +48,7 @@ This is a small Conventional-style policy. A format is built from the blocks you
 
 If your team uses both Jira task commits and taskless chores, configure two formats as shown in the [permanent policy example](docs/configuration-examples.md#permanent-policy-with-two-formats).
 
-Use `subject.characters` to constrain writing systems; the examples include [Latin-only subjects](docs/configuration-examples.md#english-subject) and [Cyrillic subjects with English terms](docs/configuration-examples.md#cyrillic-subject-with-english-terms).
+More subject examples cover [Latin-only subjects](docs/configuration-examples.md#english-subject), [Cyrillic subjects with English terms](docs/configuration-examples.md#cyrillic-subject-with-english-terms), and [Han characters with English terms](docs/configuration-examples.md#han-characters-with-english-terms).
 
 The config file and its required fields must be present. Every command validates the configuration before checking messages; a missing file or required field fails with a nonzero exit code and an error identifying the relevant configuration field or format. Unknown keys, character groups, contradictory settings, and invalid values also fail. Run `commit-msg-guardian check-config` after editing the file.
 
