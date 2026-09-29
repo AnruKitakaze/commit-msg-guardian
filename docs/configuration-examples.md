@@ -109,8 +109,18 @@ commit:
       separators: [":", "!:"]
 ```
 
-- **OK:** `feat: add endpoint`; `fix(api): correct response`; `feat!: replace old API`; `feat(api)!: replace old API`.
-- **Not OK:** `custom: add endpoint` (type not listed); `feat[api]: add endpoint` (wrong brackets); `feat! : replace API` (wrong separator).
+**OK:**
+
+- `feat: add endpoint`
+- `fix(api): correct response`
+- `feat!: replace old API`
+- `feat(api)!: replace old API`
+
+**Not OK:**
+
+- `custom: add endpoint` (type not listed)
+- `feat[api]: add endpoint` (wrong brackets)
+- `feat! : replace API` (wrong separator)
 
 `!:` is a literal separator option. It permits the Conventional Commits breaking-change marker after the type or scope. A `BREAKING CHANGE: ...` footer is also allowed; neither form requires the other. The [specification](https://www.conventionalcommits.org/en/v1.0.0/) does not prescribe a type list.
 
@@ -127,8 +137,15 @@ commit:
           projects: [TASK]
 ```
 
-- **OK:** `[TASK-1234] do something` (body optional).
-- **Not OK:** `(TASK-1234) do something` (wrong brackets); `[OTHER-1234] do something` (wrong project); `[TASK-1234]` (empty subject).
+**OK:**
+
+- `[TASK-1234] do something` (body optional)
+
+**Not OK:**
+
+- `(TASK-1234) do something` (wrong brackets)
+- `[OTHER-1234] do something` (wrong project)
+- `[TASK-1234]` (empty subject)
 
 The issue key is checked locally; the tool does not contact Jira. To allow round brackets too, add a second format with `scope.brackets: round`. For `TASK-1234: subject`, use `scope.brackets: none` and `separators: [":"]`.
 
@@ -148,8 +165,14 @@ commit:
       separators: [":"]
 ```
 
-- **OK:** `feat(TASK-1234): add feature`.
-- **Not OK:** `feat(OTHER-1234): add feature` (wrong project); `feat(api): add feature` (not an issue key).
+**OK:**
+
+- `feat(TASK-1234): add feature`
+
+**Not OK:**
+
+- `feat(OTHER-1234): add feature` (wrong project)
+- `feat(api): add feature` (not an issue key)
 
 ## English subject
 
@@ -162,8 +185,15 @@ subject:
     required: [Latin]
 ```
 
-- **OK:** `fix: update API v2` in a format with `type` and `separators: [":"]`.
-- **Not OK:** `fix: обновить API` (Cyrillic); `fix: 123` (no Latin letter); `fix: update C++ bindings` (`+` is a symbol).
+**OK:**
+
+- `fix: update API v2` (in a format with `type` and `separators: [":"]`)
+
+**Not OK:**
+
+- `fix: обновить API` (Cyrillic)
+- `fix: 123` (no Latin letter)
+- `fix: update C++ bindings` (`+` is a symbol)
 
 ## Cyrillic subject with English terms
 
@@ -176,8 +206,14 @@ subject:
     required: [Cyrillic]
 ```
 
-- **OK:** `[TASK-1234] Исправить API flow v2` in the square-bracket Jira format above.
-- **Not OK:** `[TASK-1234] Fix API flow` (no Cyrillic letter); `[TASK-1234] 改善 API flow` (other script).
+**OK:**
+
+- `[TASK-1234] Исправить API flow v2` (in the square-bracket Jira format above)
+
+**Not OK:**
+
+- `[TASK-1234] Fix API flow` (no Cyrillic letter)
+- `[TASK-1234] 改善 API flow` (other script)
 
 This detects an all-Latin subject; it cannot prove that the sentence is Russian. Multiple entries in `required` mean **each** group must occur.
 
@@ -204,8 +240,15 @@ commit:
         min_length: 20
 ```
 
-- **OK:** `docs: correct examples` (body exempt); `feat(api): add pagination` followed by a blank line and at least 20 body characters.
-- **Not OK:** `feat(api): add pagination` without a body; `feat(api): Add pagination.` (case and period).
+**OK:**
+
+- `docs: correct examples` (body exempt)
+- `feat(api): add pagination` followed by a blank line and at least 20 body characters
+
+**Not OK:**
+
+- `feat(api): add pagination` without a body
+- `feat(api): Add pagination.` (case and period)
 
 This is an illustrative policy inspired by [Angular's guidelines](https://github.com/angular/angular/blob/main/contributing-docs/commit-message-guidelines.md).
 
@@ -223,8 +266,13 @@ commit:
         max_line_length: 72
 ```
 
-- **OK:** `Improve error messages`.
-- **Not OK:** `improve error messages` (first letter must be uppercase).
+**OK:**
+
+- `Improve error messages`
+
+**Not OK:**
+
+- `improve error messages` (first letter must be uppercase)
 
 ## Permanent policy with two formats
 
@@ -246,8 +294,16 @@ commit:
       separators: [":"]
 ```
 
-- **OK:** `[TASK-1234] fix cache`; `chore: bump packageX version`; `chore(deps): update packageX`.
-- **Not OK:** `feat: add cache` (type not allowed); `[TASK-1234]` (empty subject).
+**OK:**
+
+- `[TASK-1234] fix cache`
+- `chore: bump packageX version`
+- `chore(deps): update packageX`
+
+**Not OK:**
+
+- `feat: add cache` (type not allowed)
+- `[TASK-1234]` (empty subject)
 
 Branch names do not select a format. Both formats form the permanent policy.
 
@@ -267,8 +323,14 @@ Add a third format to the two above. Replace the email with the **Git commit aut
       separators: [":"]
 ```
 
-- **OK for the configured author:** `fix(deps): update module google.golang.org/grpc to v1.23.4 [security]`; `chore(deps): update module golang.org/x/text to v0.12.3 [security]`.
-- **Not OK for that author:** `chore: update packageX` (scope required), even though a general format accepts it for other authors.
+**OK for the configured author:**
+
+- `fix(deps): update module google.golang.org/grpc to v1.23.4 [security]`
+- `chore(deps): update module golang.org/x/text to v0.12.3 [security]`
+
+**Not OK for that author:**
+
+- `chore: update packageX` (scope required, even though a general format accepts it for other authors)
 
 Renovate can use both `chore(deps)` and `fix(deps)` ([semantic commits](https://docs.renovatebot.com/semantic-commits/)). Omit `when` if everyone may use the format.
 
@@ -283,8 +345,14 @@ trailers:
       value_pattern: '^TASK-[1-9][0-9]*$'
 ```
 
-- **OK:** `feat(api): add pagination` followed by a blank line and `Refs: TASK-1234` at the end.
-- **Not OK:** The same message without `Refs: TASK-1234`, or with `Refs: OTHER-1234`.
+**OK:**
+
+- `feat(api): add pagination` followed by a blank line and `Refs: TASK-1234` at the end
+
+**Not OK:**
+
+- `feat(api): add pagination` without `Refs: TASK-1234`
+- `feat(api): add pagination` with `Refs: OTHER-1234`
 
 Required trailer checks recognize single-line entries in the final trailer block. A footer follows the body, or follows the subject after a blank line when there is no body.
 
@@ -300,8 +368,14 @@ commit:
         max_length: 72
 ```
 
-- **OK:** `TASK-123 :: improve output`.
-- **Not OK:** `TASK-123: improve output` (wrong punctuation); `TASK-123 :: ` (empty subject).
+**OK:**
+
+- `TASK-123 :: improve output`
+
+**Not OK:**
+
+- `TASK-123: improve output` (wrong punctuation)
+- `TASK-123 :: ` (empty subject)
 
 A pattern must match the entire header and include named `subject`. Optional named groups are `type`, `scope`, and `issue`; `type` and `scope` can then have their usual text checks. `pattern` and `separators` are mutually exclusive.
 
