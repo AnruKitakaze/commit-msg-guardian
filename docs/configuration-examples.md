@@ -22,6 +22,53 @@ Missing required fields fail at startup with an error pointing to the field or f
 
 A subject is always required and cannot be empty. Body checks still run on an empty body if a positive minimum length or required character group is configured; `body.optional_for_types` exempts its listed types when their body is empty. A plain subject-only format accepts nearly any nonempty header, so review it before combining it with stricter general formats.
 
+## Character groups
+
+Use `characters` under `type`, `scope`, `subject`, or `body`. `allowed` is a union of permitted groups, `required` demands at least one character from **each** listed group, and `forbidden` rejects any character from its groups. Omitting `allowed` permits all groups.
+
+- **Writing systems:** `Latin`, `Cyrillic`, `Han`, `Greek`, `Arabic`, `Hebrew`, `Devanagari`, `Hiragana`, `Katakana`, `Hangul`, and other names from Go's `unicode.Scripts`. `Common` and `Inherited` cannot be configured.
+- **Other groups:** `letter` (any Unicode letter), `other_letter` (a letter without a recognized script), `digit`, `whitespace`, `punctuation`, `symbol`, `mark`, and `other`.
+
+Script groups match **letters** in the corresponding writing system, not a language. Other characters are classified by category, even if Unicode associates them with a script: a space is `whitespace`, `2` is `digit`, `+` is `symbol`, and a combining accent is `mark`. Braille patterns are `symbol`, not `Braille`, in the current checker. Include these groups explicitly in `allowed` when needed. The supported script names follow the Go version used to build the tool.
+
+For a Latin subject with digits and punctuation, add this to a format:
+
+```yaml
+subject:
+  characters:
+    allowed: [Latin, digit, whitespace, punctuation]
+    required: [Latin]
+```
+
+**OK:**
+
+- `update API v2` (Latin letters, spaces, and a digit)
+
+**Not OK:**
+
+- `update C++ bindings` (`+` needs `symbol`)
+- `обновить API` (Cyrillic is not allowed)
+- `123` (no Latin letter)
+
+Add `symbol` to `allowed` to permit `C++`. For Japanese text, add `Hiragana` and/or `Katakana` alongside `Han` as needed; the [Han example](#han-characters-with-english-terms) shows what happens when Hiragana is omitted.
+
+To reject Cyrillic while leaving all other groups unrestricted, omit `allowed`:
+
+```yaml
+subject:
+  characters:
+    forbidden: [Cyrillic]
+```
+
+**OK:**
+
+- `update API`
+- `更新 API`
+
+**Not OK:**
+
+- `исправить API` (contains Cyrillic letters)
+
 ## Complete field reference
 
 This copyable configuration shows every supported field. The first format uses the constructor. The second shows the regex escape hatch, which cannot share `separators`, `scope.brackets`, or `scope.issue` with the constructor.
@@ -88,8 +135,7 @@ ci:
       # env: COMMIT_MSG_GUARDIAN_BASE_REF # Alternative to ref; never both.
 ```
 
-- `characters.allowed` is a union. Every group in `characters.required` must occur; any matching group in `characters.forbidden` rejects the text. Without `allowed`, all groups are allowed.
-- Character groups include Unicode scripts such as `Latin` and `Cyrillic`, plus `letter`, `digit`, `whitespace`, `punctuation`, `symbol`, `mark`, and `other`. They check writing systems, not natural language. Include `symbol` for `+` in `C++`.
+- See [character groups](#character-groups) for group names and how `allowed`, `required`, and `forbidden` interact.
 - `structure: flat` accepts one scope segment; `slash-separated` accepts segments joined by `/`. Each segment uses Latin letters, digits, and hyphens and starts and ends with a letter or digit.
 - Lengths count Unicode code points. `body` limits apply to body text only; a final trailer block is checked separately.
 - `when.author_email` overrides all general formats for that author. CI reads the stored commit author; the local hook uses the Git author identity.
@@ -216,6 +262,29 @@ subject:
 - `[TASK-1234] 改善 API flow` (other script)
 
 This detects an all-Latin subject; it cannot prove that the sentence is Russian. Multiple entries in `required` mean **each** group must occur.
+
+## Han characters with English terms
+
+Add this to a format's `subject` block:
+
+```yaml
+subject:
+  characters:
+    allowed: [Han, Latin, digit, whitespace, punctuation]
+    required: [Han]
+```
+
+**OK:**
+
+- `feat: 更新 API v2` (in a format with `type` and `separators: [":"]`)
+
+**Not OK:**
+
+- `feat: Update API v2` (no Han character)
+- `feat: Обновить API` (Cyrillic is not allowed)
+- `feat: 更新を確認` (Hiragana is not allowed)
+
+`Han` identifies the writing system used by Chinese characters and Japanese kanji; it cannot verify that a sentence is Chinese. Add other scripts to `allowed` if your team's messages use them.
 
 ## Angular-style policy
 

@@ -39,6 +39,14 @@ func TestCharacterGroups(t *testing.T) {
 			rejected: []string{"Fix API flow", "改善 API flow"},
 		},
 		{
+			name: "Han characters with English terms",
+			characters: config.Characters{
+				Allowed: []string{"Han", "Latin", "digit", "whitespace", "punctuation"}, Required: []string{"Han"},
+			},
+			accepted: []string{"更新 API v2"},
+			rejected: []string{"Update API v2", "Обновить API", "更新を確認"},
+		},
+		{
 			name: "every required group must occur",
 			characters: config.Characters{
 				Allowed: []string{"Cyrillic", "Latin", "whitespace"}, Required: []string{"Cyrillic", "Latin"},
@@ -51,6 +59,12 @@ func TestCharacterGroups(t *testing.T) {
 			characters: config.Characters{Forbidden: []string{"Cyrillic"}},
 			accepted:   []string{"Fix API", "改善 API", "Fix \u0483 mark"},
 			rejected:   []string{"Исправить API"},
+		},
+		{
+			name:       "forbid Han only",
+			characters: config.Characters{Forbidden: []string{"Han"}},
+			accepted:   []string{"Fix API", "Исправить API"},
+			rejected:   []string{"更新 API"},
 		},
 		{
 			name:       "forbid combining marks explicitly",
