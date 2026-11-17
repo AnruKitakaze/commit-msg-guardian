@@ -16,6 +16,8 @@ import (
 
 const usage = `Usage: commit-msg-guardian [--config path] <command>
 
+Config path precedence: --config, COMMIT_MSG_GUARDIAN_CONFIG, .commit-msg-guardian.yaml
+
 Commands:
   check-file <path>     Validate a draft commit message (local commit-msg hook)
   check-commit <ref>    Validate one stored Git commit
@@ -60,6 +62,10 @@ func run(args []string, stdout io.Writer) error {
 	}
 	path := *configPath
 	if path == "" {
+		path = os.Getenv("COMMIT_MSG_GUARDIAN_CONFIG")
+	}
+	useDefaultConfig := path == ""
+	if useDefaultConfig {
 		root, err := gitrepo.Root()
 		if err != nil {
 			root, err = os.Getwd()
@@ -71,7 +77,10 @@ func run(args []string, stdout io.Writer) error {
 	}
 	cfg, err := config.Load(path)
 	if err != nil {
-		return fmt.Errorf("%w (create .commit-msg-guardian.yaml or pass --config)", err)
+		if useDefaultConfig && errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("%w (create .commit-msg-guardian.yaml, pass --config, or set COMMIT_MSG_GUARDIAN_CONFIG)", err)
+		}
+		return err
 	}
 	v, err := validator.New(cfg)
 	if err != nil {

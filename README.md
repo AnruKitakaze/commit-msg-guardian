@@ -1,6 +1,6 @@
 # Commit Message Guardian
 
-Commit Message Guardian validates Git commit messages locally through a `commit-msg` hook and in CI against a range of commits. Both paths read the same project-owned `.commit-msg-guardian.yaml` file.
+Commit Message Guardian validates Git commit messages locally through a `commit-msg` hook and in CI against a range of commits. Both paths read `.commit-msg-guardian.yaml` from the repository root by default.
 
 ## Choose the characters your team uses
 
@@ -56,17 +56,68 @@ Optional fields do not add restrictions when omitted. A missing `type` or `scope
 
 ## Use the local hook
 
-Add this repository to `.pre-commit-config.yaml`:
+Create `.pre-commit-config.yaml` for [prek](https://prek.j178.dev/) or [pre-commit](https://pre-commit.com/).
 
 ```yaml
 repos:
   - repo: https://github.com/AnruKitakaze/commit-msg-guardian
-    rev: <major-release-tag>
+    rev: v1.0.0
     hooks:
       - id: commit-msg-guardian
 ```
 
-Pin `rev` to a published release tag, then run `pre-commit install --hook-type commit-msg`. The hook calls `commit-msg-guardian check-file <message-file>`.
+For a native prek configuration, put the hook in `prek.toml`.
+
+```toml
+[[repos]]
+repo = "https://github.com/AnruKitakaze/commit-msg-guardian"
+rev = "v1.0.0"
+hooks = [{ id = "commit-msg-guardian" }]
+```
+
+Install the `commit-msg` hook with prek.
+
+```sh
+prek install --hook-type commit-msg
+```
+
+If you use pre-commit, run its install command.
+
+```sh
+pre-commit install --hook-type commit-msg
+```
+
+With the [policy above](#configure-a-project), try both messages through prek.
+
+```sh
+message_file="$(mktemp)"
+printf '%s\n' 'feat: add endpoint' > "$message_file"
+prek run commit-msg-guardian --hook-stage commit-msg --commit-msg-filename "$message_file" # passes
+printf '%s\n' 'custom: add endpoint' > "$message_file"
+prek run commit-msg-guardian --hook-stage commit-msg --commit-msg-filename "$message_file" # fails
+rm "$message_file"
+```
+
+## Share a policy across repositories
+
+All validation commands use the first nonempty path in this order.
+
+1. The `--config` flag before the subcommand.
+2. The `COMMIT_MSG_GUARDIAN_CONFIG` environment variable.
+3. `.commit-msg-guardian.yaml` at the Git repository root, or in the current directory when run outside a repository.
+
+Relative paths in the flag and environment variable are resolved from the command's working directory. A missing or invalid selected file makes the command fail.
+
+To share an existing policy, copy it from a configured repository and export its absolute path in the environment that runs Git or the hook runner. Pin the hook to a release that supports `COMMIT_MSG_GUARDIAN_CONFIG`.
+
+```sh
+mkdir -p "$HOME/.config/commit-msg-guardian"
+cp .commit-msg-guardian.yaml "$HOME/.config/commit-msg-guardian/policy.yaml"
+export COMMIT_MSG_GUARDIAN_CONFIG="$HOME/.config/commit-msg-guardian/policy.yaml"
+commit-msg-guardian check-config
+```
+
+Both hook runners inherit the variable when launched from that environment. Set the same variable in CI to select a shared policy available to the job.
 
 ## Check commits in CI
 

@@ -1,6 +1,6 @@
 # Configuration examples
 
-Copy a policy into `.commit-msg-guardian.yaml` at your Git repository root, then run `commit-msg-guardian check-config`. These are examples, not presets that the tool downloads or changes later. The local hook and CI read the same file.
+Copy a policy into `.commit-msg-guardian.yaml` at your Git repository root, then run `commit-msg-guardian check-config`. These are examples, not presets that the tool downloads or changes later. To use a file outside the repository with both your local hook and CI, see [Share a policy across repositories](../README.md#share-a-policy-across-repositories).
 
 ## Required fields and omitted checks
 
@@ -475,3 +475,9 @@ ci:
 - Both local and CI checks ignore lines starting with `#` and content from a scissors line onward, even if Git stored them literally. Indented `#` lines remain content. `pre-commit run --all-files` does not validate historical commit messages ([pre-commit docs](https://pre-commit.com/)).
 - `fixup!`, `squash!`, `amend!`, merge, and revert commits have no implicit exceptions. A platform-created final squash or merge commit needs a separate check if your policy covers it.
 - An invalid config fails both local and CI commands. An optional CI job can keep a visible warning, for example GitLab's [`allow_failure: true`](https://docs.gitlab.com/ci/yaml/#allow_failure).
+
+If the CI job makes a shared policy available at `../commit-policy.yaml`, select it when running the range check.
+
+```sh
+COMMIT_MSG_GUARDIAN_CONFIG=../commit-policy.yaml commit-msg-guardian check-range
+```
